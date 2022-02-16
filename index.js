@@ -1,30 +1,31 @@
-const Joi = require("joi");
 const express = require("express");
+const session = require('express-session')
+const bodyParser = require('body-parser');
+const userRoutes = require("./routes/authRoutes")
+require('./utils/dbconnact');
 const app = express();
-const users = require("./routes/users");
-const mongoose = require("mongoose");
+app.use(bodyParser.urlencoded({ extended: false }))
 
-mongoose.connect('mongodb://localhost/admin', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(()=> console.log("Connected To Database"))
-.catch((error)=> console.error('Error: ' + error ));
+app.set('view engine', 'ejs')
 
-app.use(express.json());
-app.use('/api/users', users);
+// app.set('trust proxy', 1)
+app.use(session({
+  secret: '2435d1c526f4d75ba264e15f14a319729eb4785d',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}))
 
-app.set('view engine', 'ejs');
+app.use('/', userRoutes)
 
-app.get('/', function(req, res) {
-  res.render('pages/index');
-});
-app.get('/about', function(req, res) {
-  res.render('pages/about');
-});
-
-app.get('/', (req, res)=>{
-    res.send('fiteer alqiadi');
+app.get('/', (req, res) =>{
+    req.session.views = (req.session.views || 0) + 1
+    console.log(`You are visited ${req.session.views} time`)
+    return res.render('index');
 });
 
-const port = process.env.port || 3001;
-app.listen(port, ()=>console.log("App working on port " +port));
+app.listen(3000, () =>{
+    console.log("Server running at port 3001")
+})
+
+module.exports = app;
